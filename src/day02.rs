@@ -1,15 +1,17 @@
 use aoc_runner_derive::{aoc, aoc_generator};
-use strum::EnumString;
+use recap::Recap;
+use serde::Deserialize;
 
-#[derive(Debug, EnumString)]
-#[strum(ascii_case_insensitive)]
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Dir {
     Forward,
     Down,
     Up,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Deserialize, Recap)]
+#[recap(regex = r#"(?P<dir>\w+) (?P<dist>\d+)"#)]
 pub struct Input {
     dir: Dir,
     dist: u32,
@@ -19,12 +21,7 @@ pub struct Input {
 pub fn input_parser(input: &str) -> Vec<Input> {
     input
         .lines()
-        .map(|s| {
-            let (dir, dist) = s.split_once(" ").expect("dir dist");
-            let dir: Dir = dir.parse().expect("direction");
-            let dist: u32 = dist.parse().expect("int");
-            Input { dir, dist }
-        })
+        .map(|s| s.parse().expect("Format: 'forward 50'"))
         .collect()
 }
 
@@ -68,7 +65,8 @@ pub fn part2(input: &[Input]) -> u32 {
 mod test_ {
     use super::*;
 
-    const TESTCASE: &str = "forward 5
+    const TESTCASE: &str = "\
+forward 5
 down 5
 forward 8
 up 3
