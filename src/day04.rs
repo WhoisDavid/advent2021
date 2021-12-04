@@ -23,21 +23,14 @@ pub fn input_parser(input: &str) -> Input {
     Input { draw, boards }
 }
 
-/*
-Hashmap
-number => (board_idx, row, col)
-
-board_idx, row_idx => count
-*/
-
 #[derive(Debug, Default, Clone)]
-struct Board {
+struct Bingo {
     row_counter: HashMap<usize, u32>,
     col_counter: HashMap<usize, u32>,
     drawn: HashSet<u32>,
 }
 
-impl Board {
+impl Bingo {
     fn inc_row(&mut self, row_idx: usize) -> bool {
         let row = self.row_counter.entry(row_idx).or_insert(0);
         *row += 1;
@@ -62,7 +55,7 @@ impl Board {
 
 #[aoc(day4, part1)]
 pub fn part1(input: &Input) -> Option<u32> {
-    let mut h = vec![Board::default(); input.boards.len()];
+    let mut h = vec![Bingo::default(); input.boards.len()];
     for d in input.draw.iter() {
         for (board_idx, board_numbers) in input.boards.iter().enumerate() {
             for (idx, val) in board_numbers.iter().enumerate() {
@@ -86,7 +79,7 @@ pub fn part1(input: &Input) -> Option<u32> {
 #[aoc(day4, part2)]
 pub fn part2(input: &Input) -> Option<u32> {
     let num_boards = input.boards.len();
-    let mut h = vec![Board::default(); num_boards];
+    let mut h = vec![Bingo::default(); num_boards];
     let mut winning_boards = HashSet::new();
     for d in input.draw.iter() {
         for (board_idx, board_numbers) in input.boards.iter().enumerate() {
