@@ -6,6 +6,7 @@ macro_rules! debug {
     };
 }
 
+#[allow(unused_macros)]
 #[cfg(not(debug_assertions))]
 macro_rules! debug {
     ($x:expr) => {
