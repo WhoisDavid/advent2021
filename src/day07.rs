@@ -14,7 +14,7 @@ pub fn part1(input: &[i32]) -> i32 {
 }
 
 #[aoc(day7, part2, dumb)]
-pub fn part2(input: &[i32]) -> Option<i32> {
+pub fn part2_dumb(input: &[i32]) -> Option<i32> {
     let mut crabs = input.to_vec();
     crabs.sort();
     let start = *crabs.first().unwrap();
@@ -38,6 +38,21 @@ pub fn part2(input: &[i32]) -> Option<i32> {
     min_fuel
 }
 
+#[aoc(day7, part2, mean)]
+pub fn part2(input: &[i32]) -> i32 {
+    let floored_mean = (input.iter().sum::<i32>() as f32 / input.len() as f32).floor() as i32;
+    let fuel = |pos: i32| {
+        input
+            .iter()
+            .map(|c| {
+                let diff = (*c - pos).abs();
+                diff * (diff + 1) / 2
+            })
+            .sum()
+    };
+    std::cmp::min(fuel(floored_mean), fuel(floored_mean + 1))
+}
+
 #[cfg(test)]
 mod test_day7 {
     use super::*;
@@ -51,6 +66,6 @@ mod test_day7 {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&input_parser(TESTCASE)), Some(168))
+        assert_eq!(part2(&input_parser(TESTCASE)), 168)
     }
 }
