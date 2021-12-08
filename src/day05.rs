@@ -14,8 +14,7 @@ pub struct Line {
 
 impl Line {
     fn to_points(&self) -> Vec<(i32, i32)> {
-        let mut points = Vec::new();
-        points.push((self.x2, self.y2));
+        let mut points = vec![(self.x2, self.y2)];
         let inc_x = (self.x2 - self.x1).signum();
         let inc_y = (self.y2 - self.y1).signum();
         let mut x = self.x1;

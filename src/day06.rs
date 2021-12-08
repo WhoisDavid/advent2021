@@ -106,6 +106,6 @@ mod test_ {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&input_parser(TESTCASE)), 2_6984_457_539)
+        assert_eq!(part2(&input_parser(TESTCASE)), 26_984_457_539)
     }
 }

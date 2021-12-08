@@ -8,7 +8,7 @@ pub fn input_parser(input: &str) -> Vec<i32> {
 #[aoc(day7, part1, median)]
 pub fn part1(input: &[i32]) -> i32 {
     let mut crabs = input.to_vec();
-    crabs.sort();
+    crabs.sort_unstable();
     let median = crabs[crabs.len() / 2];
     crabs.iter().map(|c| (*c - median).abs()).sum()
 }
@@ -16,7 +16,7 @@ pub fn part1(input: &[i32]) -> i32 {
 #[aoc(day7, part2, dumb)]
 pub fn part2_dumb(input: &[i32]) -> Option<i32> {
     let mut crabs = input.to_vec();
-    crabs.sort();
+    crabs.sort_unstable();
     let start = *crabs.first().unwrap();
     let end = *crabs.last().unwrap();
     let mut min_fuel = None;
