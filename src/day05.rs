@@ -57,7 +57,7 @@ pub fn part2(lines: &[Line]) -> usize {
 }
 
 #[cfg(test)]
-mod test_ {
+mod test_day05 {
     use super::*;
 
     const TESTCASE: &str = "\

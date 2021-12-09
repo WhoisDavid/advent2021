@@ -24,7 +24,7 @@ pub fn part2(_input: &[Input]) -> usize {
 }
 
 #[cfg(test)]
-mod test_ {
+mod test_day12 {
     use super::*;
 
     const TESTCASE: &str = "";

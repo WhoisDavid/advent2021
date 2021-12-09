@@ -54,7 +54,7 @@ pub fn part2(input: &[i32]) -> i32 {
 }
 
 #[cfg(test)]
-mod test_day7 {
+mod test_day07 {
     use super::*;
 
     const TESTCASE: &str = "16,1,2,0,4,2,7,1,2,14";

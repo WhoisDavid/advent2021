@@ -94,7 +94,7 @@ pub fn part2_fred_array(input: &[usize]) -> usize {
 }
 
 #[cfg(test)]
-mod test_ {
+mod test_day06 {
     use super::*;
 
     const TESTCASE: &str = "3,4,3,1,2";

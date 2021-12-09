@@ -111,7 +111,7 @@ pub fn part2(input: &Input) -> Option<u32> {
 
 
 #[cfg(test)]
-mod test_ {
+mod test_day04 {
     use super::*;
 
     const TESTCASE: &str = "\

@@ -73,7 +73,7 @@ pub fn part2(input: &str) -> u32 {
 }
 
 #[cfg(test)]
-mod test_ {
+mod test_day03 {
     use super::*;
 
     const TESTCASE: &str = "\

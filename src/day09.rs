@@ -62,8 +62,10 @@ pub fn part2(hm: &HeightMap) -> usize {
     basin_sizes.iter().take(3).product()
 }
 
+
+
 #[cfg(test)]
-mod test_ {
+mod test_day09 {
     use super::*;
 
     const TESTCASE: &str = "\
