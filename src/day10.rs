@@ -33,7 +33,7 @@ pub fn part1(input: &str) -> usize {
             ']' => 57,
             '}' => 1197,
             '>' => 25137,
-            _ => unreachable!("No other chars than ()[]{}<>"),
+            _ => panic!("Only closing brackets should be illegal"),
         })
         .sum()
 }
@@ -51,10 +51,11 @@ pub fn part2(input: &str) -> usize {
                         '[' => 2,
                         '{' => 3,
                         '<' => 4,
-                        _ => unreachable!("Only open!")
+                        _ => panic!("Only open brackets should be left on the stack!"),
                     }
             })
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     scores.sort_unstable();
     scores[scores.len() / 2]
 }
