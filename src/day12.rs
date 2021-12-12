@@ -77,16 +77,16 @@ fn memo_dfs_part2(
     seen_twice: bool,
     memo: &mut HashMap<String, usize>,
 ) -> usize {
-    let mut key: String = seen.iter().cloned().sorted().collect();
-    if seen_twice {
-        key = format!("{}{}{}", 2, key, node);
-    } else {
-        key = format!("{}{}", key, node);
-    }
+    let key = format!(
+        "{}{}{}",
+        seen_twice,
+        seen.iter().cloned().sorted().collect::<String>(),
+        node
+    );
+    
     if !memo.contains_key(&key) {
         let paths = dfs_part2(node, cave, seen, seen_twice, memo);
         memo.insert(key.clone(), paths);
-    
     }
     memo[&key]
 }
