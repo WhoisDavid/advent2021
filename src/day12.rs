@@ -1,14 +1,6 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
-use recap::Recap;
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize, Recap)]
-#[recap(regex = r"(?P<field>\w+)")]
-pub struct Input {
-    field: String,
-}
 
 type Cave = HashMap<String, Vec<String>>;
 
@@ -17,12 +9,37 @@ pub fn input_parser(input: &str) -> Cave {
     let mut cave = Cave::new();
     for path in input.lines() {
         let (a, b) = path.split_once('-').unwrap();
-        let edges = cave.entry(a.to_string()).or_default();
-        edges.push(b.to_string());
-        let edges = cave.entry(b.to_string()).or_default();
-        edges.push(a.to_string());
+        if a != "end" && b != "start" {
+            let edges = cave.entry(a.to_string()).or_default();
+            edges.push(b.to_string());
+        }
+        if b != "end" && a != "start" {
+            let edges = cave.entry(b.to_string()).or_default();
+            edges.push(a.to_string());
+        }
     }
     cave
+}
+
+fn memo_dfs_part1(
+    node: &str,
+    cave: &Cave,
+    seen: HashSet<String>,
+    memo: &mut HashMap<String, usize>,
+) -> usize {
+    let key = format!(
+        "{}{}",
+        seen.iter().cloned().sorted().collect::<String>(),
+        node
+    );
+
+    if let Some(paths) = memo.get(&key) {
+        *paths
+    } else {
+        let paths = dfs_part1(node, cave, seen, memo);
+        memo.insert(key, paths);
+        paths
+    }
 }
 
 fn dfs_part1(
@@ -31,6 +48,7 @@ fn dfs_part1(
     mut seen: HashSet<String>,
     memo: &mut HashMap<String, usize>,
 ) -> usize {
+
     if node == "end" {
         return 1;
     }
@@ -51,23 +69,10 @@ fn dfs_part1(
     path
 }
 
-fn memo_dfs_part1(
-    node: &str,
-    cave: &Cave,
-    seen: HashSet<String>,
-    memo: &mut HashMap<String, usize>,
-) -> usize {
-    if !memo.contains_key(node) {
-        let paths = dfs_part1(node, cave, seen, memo);
-        memo.insert(node.to_string(), paths);
-    }
-    memo[node]
-}
-
 #[aoc(day12, part1)]
 pub fn part1(cave: &Cave) -> usize {
     let memo = &mut HashMap::new();
-    memo_dfs_part1("start", cave, HashSet::new(), memo)
+    memo_dfs_part1("start", cave, HashSet::with_capacity(10), memo)
 }
 
 fn memo_dfs_part2(
@@ -83,12 +88,14 @@ fn memo_dfs_part2(
         seen.iter().cloned().sorted().collect::<String>(),
         node
     );
-    
-    if !memo.contains_key(&key) {
+
+    if let Some(paths) = memo.get(&key) {
+        *paths
+    } else {
         let paths = dfs_part2(node, cave, seen, seen_twice, memo);
-        memo.insert(key.clone(), paths);
+        memo.insert(key, paths);
+        paths
     }
-    memo[&key]
 }
 
 fn dfs_part2(
@@ -109,7 +116,7 @@ fn dfs_part2(
     }
 
     let mut path = 0;
-    for node in cave[node].iter().filter(|n| *n != "start") {
+    for node in cave[node].iter() {
         if seen.contains(node) && seen_twice {
             continue;
         }
