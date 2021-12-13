@@ -1,4 +1,5 @@
 use aoc_runner_derive::{aoc, aoc_generator};
+use hashbrown::HashSet;
 use itertools::Itertools;
 use std::cmp::Ordering;
 pub enum Fold {
@@ -6,7 +7,7 @@ pub enum Fold {
     Y(u32),
 }
 
-type Dots = Vec<(u32, u32)>;
+type Dots = HashSet<(u32, u32)>;
 
 pub struct Input {
     dots: Dots,
@@ -47,7 +48,6 @@ fn fold_paper(dots: Dots, fold: &Fold) -> Dots {
                 Ordering::Equal => None,
                 Ordering::Greater => Some((2 * folding_axis - x, y)),
             })
-            .unique() // remove overlapping points
             .collect(),
         Fold::Y(folding_axis) => dots
             .into_iter()
@@ -56,7 +56,6 @@ fn fold_paper(dots: Dots, fold: &Fold) -> Dots {
                 Ordering::Equal => None,
                 Ordering::Greater => Some((x, 2 * folding_axis - y)),
             })
-            .unique() // remove overlapping points
             .collect(),
     }
 }
@@ -70,31 +69,30 @@ pub fn part1(input: &Input) -> usize {
 /// 0 -- x
 /// |
 /// y
-fn print_dots(mut dots: Dots) {
-    dots.sort();
+fn print_dots(dots: Dots) -> String {
     let xmax = *dots.iter().map(|(x, _)| x).max().unwrap();
     let ymax = *dots.iter().map(|(_, y)| y).max().unwrap();
-    for line in 0..=ymax {
-        let row = dots
-            .iter()
-            .filter(|(_, y)| *y == line)
-            .map(|(x, _)| *x)
-            .collect::<Vec<_>>();
-        let row = (0..=xmax)
-            .map(|x| if row.contains(&x) { '#' } else { ' ' })
-            .collect::<String>();
-        println!("{}", row);
-    }
+    (0..=ymax)
+        .map(|line| {
+            let row = dots
+                .iter()
+                .filter(|(_, y)| *y == line)
+                .map(|(x, _)| *x)
+                .collect::<Vec<_>>();
+            (0..=xmax)
+                .map(|x| if row.contains(&x) { '#' } else { ' ' })
+                .collect::<String>()
+        })
+        .join("\n")
 }
 
 #[aoc(day13, part2)]
-pub fn part2(input: &Input) -> &'static str {
+pub fn part2(input: &Input) -> String {
     let dots = input
         .folds
         .iter()
         .fold(input.dots.clone(), |dots, fold| fold_paper(dots, fold));
-    print_dots(dots);
-    "Code is printed above!"
+    format!("\n{}", print_dots(dots))
 }
 
 #[cfg(test)]
