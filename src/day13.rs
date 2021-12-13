@@ -47,7 +47,7 @@ fn fold_paper(dots: Dots, fold: &Fold) -> Dots {
                 Ordering::Equal => None,
                 Ordering::Greater => Some((2 * folding_axis - x, y)),
             })
-            .unique()
+            .unique() // remove overlapping points
             .collect(),
         Fold::Y(folding_axis) => dots
             .into_iter()
@@ -56,7 +56,7 @@ fn fold_paper(dots: Dots, fold: &Fold) -> Dots {
                 Ordering::Equal => None,
                 Ordering::Greater => Some((x, 2 * folding_axis - y)),
             })
-            .unique()
+            .unique() // remove overlapping points
             .collect(),
     }
 }
@@ -127,10 +127,5 @@ fold along x=5";
     #[test]
     fn test_part1() {
         assert_eq!(part1(&input_parser(TESTCASE)), 17)
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&input_parser(TESTCASE)), 0)
     }
 }
