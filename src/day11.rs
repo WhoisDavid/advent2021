@@ -1,23 +1,22 @@
 use std::collections::VecDeque;
 
 use aoc_runner_derive::{aoc, aoc_generator};
-use hashbrown::HashMap;
 
-type Octopuses = HashMap<(i32, i32), i32>;
+const OCTO_WIDTH: usize = 10;
+const OCTOPUSES_COUNT: usize = OCTO_WIDTH * OCTO_WIDTH;
+const RANGE: core::ops::Range<i32> = 0..OCTO_WIDTH as i32;
 
-const OCTOPUSES_COUNT: usize = 100;
+type Octopuses = [u32; OCTOPUSES_COUNT];
 
 #[aoc_generator(day11)]
 pub fn input_parser(input: &str) -> Octopuses {
+    let mut octos = [0; OCTOPUSES_COUNT];
     input
-        .lines()
+        .chars()
+        .filter(|c| *c != '\n')
         .enumerate()
-        .flat_map(|(x, row)| {
-            row.chars()
-                .enumerate()
-                .map(move |(y, height)| ((x as i32, y as i32), height.to_digit(10).unwrap() as i32))
-        })
-        .collect()
+        .for_each(|(idx, c)| octos[idx] = c.to_digit(10).unwrap());
+    octos
 }
 
 const NEIGHBORS: [(i32, i32); 8] = [
@@ -31,27 +30,36 @@ const NEIGHBORS: [(i32, i32); 8] = [
     (1, 1),
 ];
 
-fn octo_step(hm: &mut Octopuses, mut flashes: usize) -> usize {
-    hm.values_mut().for_each(|e| *e += 1);
-    let mut flashing = hm
+fn octo_step(octopuses: &mut Octopuses, mut flashes: usize) -> usize {
+    octopuses.iter_mut().for_each(|e| *e += 1);
+    let mut flashing = octopuses
         .iter()
+        .enumerate()
         .filter(|(_, e)| **e > 9)
-        .map(|(pos, _)| *pos)
+        .map(|(pos, _)| pos)
         .collect::<VecDeque<_>>();
 
     let mut visited = [false; OCTOPUSES_COUNT];
-    while let Some((x, y)) = flashing.pop_front() {
-        if !visited[(x * 10 + y) as usize] {
-            visited[(x * 10 + y) as usize] = true;
+    while let Some(pos) = flashing.pop_front() {
+        if !visited[pos] {
+            visited[pos] = true;
             // Count flash
             flashes += 1;
             // Reset octopus
-            hm.insert((x, y), 0);
+            octopuses[pos] = 0;
+            //
+            let x = (pos / OCTO_WIDTH) as i32;
+            let y = pos.rem_euclid(OCTO_WIDTH) as i32;
             // Update neighbors
             NEIGHBORS.iter().for_each(|(dx, dy)| {
-                let neighbor = (x + dx, y + dy);
-                if visited.get((neighbor.0 * 10 + neighbor.1) as usize) == Some(&false) {
-                    if let Some(e) = hm.get_mut(&neighbor) {
+                let (nx, ny) = (x + dx, y + dy);
+                if !RANGE.contains(&nx) || !RANGE.contains(&ny) {
+                    return;
+                }
+
+                let neighbor = (nx * OCTO_WIDTH as i32 + ny) as usize;
+                if visited.get(neighbor) == Some(&false) {
+                    if let Some(e) = octopuses.get_mut(neighbor) {
                         *e += 1;
                         if *e > 9 {
                             flashing.push_back(neighbor)
@@ -65,15 +73,15 @@ fn octo_step(hm: &mut Octopuses, mut flashes: usize) -> usize {
 }
 
 #[aoc(day11, part1)]
-pub fn part1(hm: &Octopuses) -> usize {
-    let mut hm = hm.clone();
-    (0..100).fold(0, |flashes, _| octo_step(&mut hm, flashes))
+pub fn part1(octopuses: &Octopuses) -> usize {
+    let mut octopuses = octopuses.clone();
+    (0..100).fold(0, |flashes, _| octo_step(&mut octopuses, flashes))
 }
 
 #[aoc(day11, part2)]
-pub fn part2(hm: &Octopuses) -> Option<usize> {
-    let mut hm = hm.clone();
-    (1..).find(|_| octo_step(&mut hm, 0) == OCTOPUSES_COUNT)
+pub fn part2(octopuses: &Octopuses) -> Option<usize> {
+    let mut octopuses = octopuses.clone();
+    (1..).find(|_| octo_step(&mut octopuses, 0) == OCTOPUSES_COUNT)
 }
 
 #[cfg(test)]
