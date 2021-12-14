@@ -74,13 +74,13 @@ fn octo_step(octopuses: &mut Octopuses, mut flashes: usize) -> usize {
 
 #[aoc(day11, part1)]
 pub fn part1(octopuses: &Octopuses) -> usize {
-    let mut octopuses = octopuses.clone();
+    let mut octopuses = *octopuses;
     (0..100).fold(0, |flashes, _| octo_step(&mut octopuses, flashes))
 }
 
 #[aoc(day11, part2)]
 pub fn part2(octopuses: &Octopuses) -> Option<usize> {
-    let mut octopuses = octopuses.clone();
+    let mut octopuses = *octopuses;
     (1..).find(|_| octo_step(&mut octopuses, 0) == OCTOPUSES_COUNT)
 }
 

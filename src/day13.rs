@@ -43,7 +43,7 @@ fn fold_paper(dots: Dots, fold: &Fold) -> Dots {
     match fold {
         Fold::X(folding_axis) => dots
             .into_iter()
-            .filter_map(|(x, y)| match x.cmp(&folding_axis) {
+            .filter_map(|(x, y)| match x.cmp(folding_axis) {
                 Ordering::Less => Some((x, y)),
                 Ordering::Equal => None,
                 Ordering::Greater => Some((2 * folding_axis - x, y)),
@@ -51,7 +51,7 @@ fn fold_paper(dots: Dots, fold: &Fold) -> Dots {
             .collect(),
         Fold::Y(folding_axis) => dots
             .into_iter()
-            .filter_map(|(x, y)| match y.cmp(&folding_axis) {
+            .filter_map(|(x, y)| match y.cmp(folding_axis) {
                 Ordering::Less => Some((x, y)),
                 Ordering::Equal => None,
                 Ordering::Greater => Some((x, 2 * folding_axis - y)),
