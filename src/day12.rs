@@ -53,82 +53,21 @@ pub fn input_parser(input: &str) -> Cave {
     }
 }
 
-fn memo_dfs_part1(
-    node: usize,
-    cave: &Cave,
-    seen: BitFlags,
-    memo: &mut HashMap<(BitFlags, usize), usize>,
-) -> usize {
-    let key = (seen, node);
-    if let Some(paths) = memo.get(&key) {
-        *paths
-    } else {
-        let paths = dfs_part1(node, cave, seen, memo);
-        memo.insert(key, paths);
-        paths
-    }
-}
-
-fn dfs_part1(
-    node: usize,
-    cave: &Cave,
-    mut seen: BitFlags,
-    memo: &mut HashMap<(BitFlags, usize), usize>,
-) -> usize {
-    if node == cave.end {
-        return 1;
-    }
-
-    let mask = 1 << node;
-
-    if cave.small_caves & mask != 0 {
-        seen |= mask;
-    }
-
-    let mut path = 0;
-    for &nnode in cave.graph[node].iter() {
-        if seen & (1 << node) != 0 {
-            continue;
-        }
-
-        path += memo_dfs_part1(nnode, cave, seen, memo)
-    }
-
-    path
-}
-
-#[aoc(day12, part1)]
-pub fn part1(cave: &Cave) -> usize {
-    let memo = &mut HashMap::new();
-    memo_dfs_part1(0, cave, 0, memo)
-}
-
-fn memo_dfs_part2(
-    node: usize,
-    cave: &Cave,
-    seen: BitFlags,
-    seen_twice: bool,
-    memo: &mut HashMap<(bool, BitFlags, usize), usize>,
-) -> usize {
-    let key = (seen_twice, seen, node);
-    if let Some(paths) = memo.get(&key) {
-        *paths
-    } else {
-        let paths = dfs_part2(node, cave, seen, seen_twice, memo);
-        memo.insert(key, paths);
-        paths
-    }
-}
-
-fn dfs_part2(
+fn dfs(
     node: usize,
     cave: &Cave,
     mut seen: BitFlags,
     mut seen_twice: bool,
     memo: &mut HashMap<(bool, BitFlags, usize), usize>,
 ) -> usize {
+
     if node == cave.end {
         return 1;
+    }
+
+    let key = (seen_twice, seen, node);
+    if let Some(paths) = memo.get(&key) {
+        return *paths;
     }
 
     let mask = 1 << node;
@@ -140,21 +79,29 @@ fn dfs_part2(
         seen |= mask;
     }
 
-    let mut path = 0;
-    for &nnode in cave.graph[node].iter() {
-        if seen & (1 << nnode) > 0 && seen_twice {
+    let mut paths = 0;
+    for &neighbor in cave.graph[node].iter() {
+        if seen & (1 << neighbor) != 0 && seen_twice {
             continue;
         }
-        path += memo_dfs_part2(nnode, cave, seen, seen_twice, memo)
+
+        paths += dfs(neighbor, cave, seen, seen_twice, memo)
     }
 
-    path
+    memo.insert(key, paths);
+    paths
+}
+
+#[aoc(day12, part1)]
+pub fn part1(cave: &Cave) -> usize {
+    let memo = &mut HashMap::new();
+    dfs(0, cave, 0, true, memo)
 }
 
 #[aoc(day12, part2)]
 pub fn part2(cave: &Cave) -> usize {
     let memo = &mut HashMap::new();
-    memo_dfs_part2(0, cave, 0, false, memo)
+    dfs(0, cave, 0, false, memo)
 }
 
 #[cfg(test)]
