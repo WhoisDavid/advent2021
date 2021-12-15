@@ -13,3 +13,15 @@ macro_rules! debug {
         std::convert::identity($x)
     };
 }
+
+#[allow(unused)]
+pub fn print_grid<T: Copy + std::fmt::Display>(t: &[T], s: usize) {
+    println!();
+    for (i, v) in t.iter().enumerate() {
+        if i % s == 0 {
+            println!()
+        }
+        print!("{:<4}", v)
+    }
+    println!();
+}
