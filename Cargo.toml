@@ -8,11 +8,12 @@ edition = "2021"
 [dependencies]
 aoc-runner = "0.3.0"
 aoc-runner-derive = "0.3.0"
-recap = "0.1.1"
+recap = { git = "https://github.com/softprops/recap", branch = "master" }
 anyhow = "1.0.51"
 serde = { version = "1.0.130", features = ["derive"] }
-regex = "1.5.4"
-lazy_static = "1.4.0"
 itertools = "0.10.1"
 hashbrown = "0.11.2"
-strum = { version = "0.23", features = ["derive"] }
+bitvec = "0.22.3"
+
+[profile.release]
+debug = true
