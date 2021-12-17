@@ -20,24 +20,24 @@ pub fn input_parser(input: &str) -> Target {
 fn simulate_probe(mut vx: isize, mut vy: isize, target: &Target) -> Option<isize> {
     let mut x = 0;
     let mut y = 0;
-    let mut maxy = 0;
-    while !((target.xmin..=target.xmax).contains(&x) && (target.ymin..=target.ymax).contains(&y))
-        && x <= target.xmax
-        && y >= target.ymin
-    {
+    let mut max_y = 0;
+    let in_target =
+        |x, y| (target.xmin..=target.xmax).contains(&x) && (target.ymin..=target.ymax).contains(&y);
+
+    while !in_target(x, y) && x <= target.xmax && y >= target.ymin {
         x += vx;
         y += vy;
 
-        if y > maxy {
-            maxy = y;
-        }
-
         vx -= vx.signum();
-        vy -= 1
+        vy -= 1;
+
+        if y > max_y {
+            max_y = y;
+        }
     }
 
-    if (target.xmin..=target.xmax).contains(&x) && (target.ymin..=target.ymax).contains(&y) {
-        Some(maxy)
+    if in_target(x, y) {
+        Some(max_y)
     } else {
         None
     }
