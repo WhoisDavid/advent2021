@@ -47,7 +47,7 @@ fn parse_packet(input: &BitSlice<Msb0>) -> Packet {
     let mut idx = 0;
 
     let mut next_bits = |n: usize| {
-        let res = input[idx..idx + n].load_be::<u16>();
+        let res = input[idx..idx + n].load_be();
         idx += n;
         res
     };
@@ -57,7 +57,7 @@ fn parse_packet(input: &BitSlice<Msb0>) -> Packet {
     let payload = if type_id == 4 {
         // literal value
         let mut literal_val = 0;
-        // leading 1 
+        // leading 1
         while next_bits(1) == 1 {
             literal_val = (literal_val << 4) + next_bits(4) as u64;
         }
