@@ -158,7 +158,7 @@ impl Scanner {
     }
 }
 
-#[aoc_generator(day19, bruteforce)]
+#[aoc_generator(day19)]
 pub fn input_parser(input: &str) -> Vec<Scanner> {
     input
         .split("\n\n")
@@ -184,7 +184,7 @@ const PERM: [(usize, usize, usize); 6] = [
     (1, 2, 0),
 ];
 
-#[aoc(day19, part1, bruteforce)]
+// #[aoc(day19, part1, bruteforce)]
 pub fn part1_bf(input: &[Scanner]) -> usize {
     let mut scanners = VecDeque::from(input.to_vec());
     let mut master = scanners.pop_front().unwrap();
@@ -213,7 +213,7 @@ pub fn part1(input: &[Scanner]) -> usize {
     master.beacons.len()
 }
 
-#[aoc(day19, part2, bruteforce)]
+// #[aoc(day19, part2, bruteforce)]
 pub fn part2_bf(input: &[Scanner]) -> i32 {
     let mut scanners = VecDeque::from(input.to_vec());
     let mut master = scanners.pop_front().unwrap();
