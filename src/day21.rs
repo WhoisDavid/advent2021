@@ -80,9 +80,9 @@ fn play(
 #[aoc(day21, part2)]
 pub fn part2((p1, p2): &(Position, Position)) -> u64 {
     let mut possible_rolls = [[0; 7]; 10];
-    for pos in 0..10 {
-        for roll in 0..7 {
-            possible_rolls[pos][roll] = (pos + roll + 3) % 10 + 1;
+    for (pos, rolls) in possible_rolls.iter_mut().enumerate() {
+        for (roll, possible_roll) in rolls.iter_mut().enumerate() {
+            *possible_roll = (pos + roll + 3) % 10 + 1;
         }
     }
 

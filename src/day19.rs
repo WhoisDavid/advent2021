@@ -3,7 +3,7 @@ use std::{collections::VecDeque, ops::Index};
 use aoc_runner_derive::{aoc, aoc_generator};
 use hashbrown::HashSet;
 use itertools::Itertools;
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq)]
 pub struct Beacon(i32, i32, i32);
 
 impl Index<usize> for Beacon {
@@ -23,6 +23,12 @@ impl Index<usize> for Beacon {
 impl std::hash::Hash for Beacon {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         state.write_i32(self.0 * 31 + self.1 * 37 + self.2 * 41);
+    }
+}
+
+impl PartialEq for Beacon {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0 && self.1 == other.1 && self.2 == other.2
     }
 }
 
@@ -58,7 +64,7 @@ const PERM: [(usize, usize, usize); 6] = [
     (1, 2, 0),
 ];
 
-pub fn match_beacons(beacons: &mut HashSet<Beacon>, s2: &Scanner) -> Option<Beacon> {
+pub fn match_beacons(beacons: &mut HashSet<Beacon>, s2: &[Beacon]) -> Option<Beacon> {
     // for (dirx, diry, dirz) in DIRS.into_iter().rev() {
     for dirx in [-1, 1] {
         for diry in [-1, 1] {
@@ -80,7 +86,7 @@ pub fn match_beacons(beacons: &mut HashSet<Beacon>, s2: &Scanner) -> Option<Beac
                             });
 
                             let matching_beacons =
-                                oriented_s2.clone().filter(|b| beacons.contains(&b)).count();
+                                oriented_s2.clone().filter(|b| beacons.contains(b)).count();
 
                             if matching_beacons >= 12 {
                                 beacons.extend(oriented_s2);
@@ -98,11 +104,7 @@ pub fn match_beacons(beacons: &mut HashSet<Beacon>, s2: &Scanner) -> Option<Beac
 #[aoc(day19, part1)]
 pub fn part1(input: &[Scanner]) -> usize {
     let mut input = VecDeque::from(input.to_vec());
-    let mut beacons = input
-        .pop_front()
-        .unwrap()
-        .into_iter()
-        .collect::<HashSet<_>>();
+    let mut beacons = input.pop_front().unwrap().into_iter().collect();
     while let Some(beacon) = input.pop_front() {
         if match_beacons(&mut beacons, &beacon).is_none() {
             input.push_back(beacon)
@@ -114,11 +116,7 @@ pub fn part1(input: &[Scanner]) -> usize {
 #[aoc(day19, part2)]
 pub fn part2(input: &[Scanner]) -> i32 {
     let mut input = VecDeque::from(input.to_vec());
-    let mut beacons = input
-        .pop_front()
-        .unwrap()
-        .into_iter()
-        .collect::<HashSet<_>>();
+    let mut beacons = input.pop_front().unwrap().into_iter().collect();
     let mut scanners = vec![Beacon(0, 0, 0)];
     while let Some(beacon) = input.pop_front() {
         if let Some(scanner) = match_beacons(&mut beacons, &beacon) {

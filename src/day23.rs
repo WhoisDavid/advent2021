@@ -33,7 +33,7 @@ const HALLWAY_LEN: usize = HALLWAY.len() + NUM_ROOMS;
 type Board<const N: usize> = [Node; N];
 type PossibleMoves = HashMap<(usize, usize), Vec<usize>>;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Eq)]
 pub struct Game<const N: usize, const R: usize> {
     board: Board<N>,
     moves: Rc<PossibleMoves>,
@@ -42,6 +42,12 @@ pub struct Game<const N: usize, const R: usize> {
 impl<const N: usize, const R: usize> Hash for Game<N, R> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.board.hash(state);
+    }
+}
+
+impl<const N: usize, const R: usize> PartialEq for Game<N, R> {
+    fn eq(&self, other: &Self) -> bool {
+        self.board == other.board
     }
 }
 
@@ -73,7 +79,7 @@ impl<const N: usize, const R: usize> Game<N, R> {
 
     fn possible_moves() -> PossibleMoves {
         let mut moves = HashMap::new();
-        
+
         // Hallway <=> Room
         for loc in HALLWAY {
             for (i, room) in Self::ROOMS.iter().enumerate() {
@@ -276,7 +282,7 @@ fn dfs<const N: usize, const R: usize>(
 pub fn part1(input: &str) -> Option<usize> {
     const ROOM_SIZE: usize = 2;
     const LEN: usize = HALLWAY.len() + NUM_ROOMS * (ROOM_SIZE + 1);
-    let game: Game<LEN, ROOM_SIZE> = parser(&input);
+    let game: Game<LEN, ROOM_SIZE> = parser(input);
     dfs(game, &mut HashMap::new())
 }
 

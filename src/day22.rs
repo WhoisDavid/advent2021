@@ -84,7 +84,7 @@ impl Subspace {
         }
     }
 
-    /// Intersection of 3D boxes 
+    /// Intersection of 3D boxes
     fn intersect_boxes(b1: &Box3D, b2: &Box3D) -> Option<Box3D> {
         let x = Self::intersect_interval(b1[0], b2[0]);
         let y = Self::intersect_interval(b1[1], b2[1]);
@@ -104,7 +104,7 @@ impl Subspace {
             // Inception: intersect the intersection with the new one
             self.intersections
                 .iter_mut()
-                .for_each(|s| intersection.intersect(&s));
+                .for_each(|s| intersection.intersect(s));
             self.intersections.push(intersection);
         }
     }
