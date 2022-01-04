@@ -1,12 +1,22 @@
-use std::{collections::VecDeque, ops::Index};
+use std::collections::VecDeque;
+use std::ops::Index;
 
 use aoc_runner_derive::{aoc, aoc_generator};
-use hashbrown::HashSet;
+use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
-#[derive(Clone, Debug, Eq)]
-pub struct Beacon(i32, i32, i32);
 
-impl Index<usize> for Beacon {
+const MIN_MATCH: usize = 12; // minimum matching beacons
+
+#[derive(Copy, Clone, Default, Debug, Eq, PartialOrd, Ord)]
+pub struct Point(i32, i32, i32);
+
+impl From<(i32, i32, i32)> for Point {
+    fn from(src: (i32, i32, i32)) -> Self {
+        Self(src.0, src.1, src.2)
+    }
+}
+
+impl Index<usize> for Point {
     type Output = i32;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -20,37 +30,147 @@ impl Index<usize> for Beacon {
 }
 
 // Simple hash function - speeds up the HashSet by 30-40%
-impl std::hash::Hash for Beacon {
+impl std::hash::Hash for Point {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         state.write_i32(self.0 * 31 + self.1 * 37 + self.2 * 41);
     }
 }
 
-impl PartialEq for Beacon {
+impl PartialEq for Point {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0 && self.1 == other.1 && self.2 == other.2
     }
 }
 
-type Scanner = Vec<Beacon>;
+fn manhattan_distance(b1: &Point, b2: &Point) -> i32 {
+    (b1.0 - b2.0).abs() + (b1.1 - b2.1).abs() + (b1.2 - b2.2).abs()
+}
 
-#[aoc_generator(day19)]
+#[derive(Clone, Debug, Default)]
+pub struct Scanner {
+    coords: Point,
+    beacons: HashSet<Point>,
+    distances: HashMap<Point, HashSet<i32>>,
+}
+
+impl Scanner {
+    fn new(beacons: impl Iterator<Item = Point>) -> Self {
+        Self {
+            beacons: beacons.collect(),
+            ..Self::default()
+        }
+    }
+
+    fn update_distances(&mut self) {
+        self.distances = self
+            .beacons
+            .iter()
+            .map(|b1| {
+                (
+                    *b1,
+                    self.beacons
+                        .iter()
+                        .map(|b2| manhattan_distance(b1, b2))
+                        .collect(),
+                )
+            })
+            .collect();
+    }
+
+    fn merge_scanner(&mut self, scanner: Scanner) {
+        self.beacons.extend(scanner.beacons);
+        self.update_distances();
+    }
+
+    fn match_beacons(&self, scanner: &Self) -> Option<(Point, Point)> {
+        for (a, a_dists) in self.distances.iter() {
+            for (b, b_dists) in scanner.distances.iter() {
+                if a_dists.intersection(b_dists).count() < MIN_MATCH {
+                    continue;
+                }
+
+                return Some((*a, *b));
+            }
+        }
+        None
+    }
+
+    pub fn match_orientation(
+        &self,
+        ref_point: &Point,
+        target: (&Point, &Scanner),
+    ) -> Option<Scanner> {
+        let (target_point, target_scanner) = target;
+
+        // This overdoes it because it also includes reflections which are normally not possible
+        for dirx in [-1, 1] {
+            for diry in [-1, 1] {
+                for dirz in [-1, 1] {
+                    for (x, y, z) in PERM {
+                        let transform = |point: &Point, origin: &Point| {
+                            Point(
+                                dirx * point[x] - origin.0,
+                                diry * point[y] - origin.1,
+                                dirz * point[z] - origin.2,
+                            )
+                        };
+
+                        let scanner_coords = transform(target_point, ref_point);
+
+                        let oriented_beacons = target_scanner
+                            .beacons
+                            .iter()
+                            .map(|b| transform(b, &scanner_coords));
+
+                        let matching_beacons_count = oriented_beacons
+                            .clone()
+                            .filter(|b| self.beacons.contains(b))
+                            .count();
+
+                        if matching_beacons_count >= MIN_MATCH {
+                            let mut oriented_scanner = Scanner::new(oriented_beacons);
+                            oriented_scanner.coords = scanner_coords;
+                            return Some(oriented_scanner);
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn match_scanner_with_dists(&mut self, scanner: &Scanner) -> Option<Scanner> {
+        let (ref_beacon, target_beacon) = self.match_beacons(scanner)?;
+        self.match_orientation(&ref_beacon, (&target_beacon, scanner))
+    }
+
+    fn match_scanner_bf(&mut self, scanner: &Scanner) -> Option<Scanner> {
+        for ref_beacon in self.beacons.iter() {
+            for target_beacon in scanner.beacons.iter() {
+                if let Some(oriented_scaner) =
+                    self.match_orientation(ref_beacon, (target_beacon, scanner))
+                {
+                    return Some(oriented_scaner);
+                }
+            }
+        }
+        None
+    }
+}
+
+#[aoc_generator(day19, bruteforce)]
 pub fn input_parser(input: &str) -> Vec<Scanner> {
     input
         .split("\n\n")
         .map(|scanner| {
-            scanner
-                .lines()
-                .skip(1)
-                .map(|l| {
-                    let mut d = l.splitn(3, ',');
-                    Beacon(
-                        d.next().unwrap().parse().ok().unwrap(),
-                        d.next().unwrap().parse().ok().unwrap(),
-                        d.next().unwrap().parse().ok().unwrap(),
-                    )
-                })
-                .collect()
+            Scanner::new(scanner.lines().skip(1).map(|l| {
+                let mut d = l.splitn(3, ',');
+                Point(
+                    d.next().unwrap().parse().ok().unwrap(),
+                    d.next().unwrap().parse().ok().unwrap(),
+                    d.next().unwrap().parse().ok().unwrap(),
+                )
+            }))
         })
         .collect()
 }
@@ -64,69 +184,73 @@ const PERM: [(usize, usize, usize); 6] = [
     (1, 2, 0),
 ];
 
-pub fn match_beacons(beacons: &mut HashSet<Beacon>, s2: &[Beacon]) -> Option<Beacon> {
-    // for (dirx, diry, dirz) in DIRS.into_iter().rev() {
-    for dirx in [-1, 1] {
-        for diry in [-1, 1] {
-            for dirz in [-1, 1] {
-                for Beacon(ax, ay, az) in beacons.iter() {
-                    for beacon_b in s2 {
-                        for (x, y, z) in PERM {
-                            let scanner_coords = Beacon(
-                                dirx * beacon_b[x] - ax,
-                                diry * beacon_b[y] - ay,
-                                dirz * beacon_b[z] - az,
-                            );
-                            let oriented_s2 = s2.iter().map(|b| {
-                                Beacon(
-                                    dirx * b[x] - scanner_coords.0,
-                                    diry * b[y] - scanner_coords.1,
-                                    dirz * b[z] - scanner_coords.2,
-                                )
-                            });
-
-                            let matching_beacons =
-                                oriented_s2.clone().filter(|b| beacons.contains(b)).count();
-
-                            if matching_beacons >= 12 {
-                                beacons.extend(oriented_s2);
-                                return Some(scanner_coords);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-#[aoc(day19, part1)]
-pub fn part1(input: &[Scanner]) -> usize {
-    let mut input = VecDeque::from(input.to_vec());
-    let mut beacons = input.pop_front().unwrap().into_iter().collect();
-    while let Some(beacon) = input.pop_front() {
-        if match_beacons(&mut beacons, &beacon).is_none() {
-            input.push_back(beacon)
-        };
-    }
-    beacons.len()
-}
-
-#[aoc(day19, part2)]
-pub fn part2(input: &[Scanner]) -> i32 {
-    let mut input = VecDeque::from(input.to_vec());
-    let mut beacons = input.pop_front().unwrap().into_iter().collect();
-    let mut scanners = vec![Beacon(0, 0, 0)];
-    while let Some(beacon) = input.pop_front() {
-        if let Some(scanner) = match_beacons(&mut beacons, &beacon) {
-            scanners.push(scanner)
+#[aoc(day19, part1, bruteforce)]
+pub fn part1_bf(input: &[Scanner]) -> usize {
+    let mut scanners = VecDeque::from(input.to_vec());
+    let mut master = scanners.pop_front().unwrap();
+    while let Some(scanner) = scanners.pop_front() {
+        if let Some(oriented_scanner) = master.match_scanner_bf(&scanner) {
+            master.merge_scanner(oriented_scanner)
         } else {
-            input.push_back(beacon)
+            scanners.push_back(scanner)
+        }
+    }
+    master.beacons.len()
+}
+
+#[aoc(day19, part1, match_distances)]
+pub fn part1(input: &[Scanner]) -> usize {
+    let mut scanners = VecDeque::from(input.to_vec());
+    scanners.iter_mut().for_each(|s| s.update_distances());
+    let mut master = scanners.pop_front().unwrap();
+    while let Some(scanner) = scanners.pop_front() {
+        if let Some(oriented_scanner) = master.match_scanner_with_dists(&scanner) {
+            master.merge_scanner(oriented_scanner)
+        } else {
+            scanners.push_back(scanner)
+        }
+    }
+    master.beacons.len()
+}
+
+#[aoc(day19, part2, bruteforce)]
+pub fn part2_bf(input: &[Scanner]) -> i32 {
+    let mut scanners = VecDeque::from(input.to_vec());
+    let mut master = scanners.pop_front().unwrap();
+    let mut scanner_coords = vec![Point::default()];
+    while let Some(scanner) = scanners.pop_front() {
+        if let Some(oriented_scanner) = master.match_scanner_bf(&scanner) {
+            scanner_coords.push(oriented_scanner.coords);
+            master.merge_scanner(oriented_scanner);
+        } else {
+            scanners.push_back(scanner)
         }
     }
 
-    scanners
+    scanner_coords
+        .iter()
+        .combinations(2)
+        .map(|c| (0..3).fold(0, |s, i| s + (c[0][i] - c[1][i]).abs()))
+        .max()
+        .unwrap()
+}
+
+#[aoc(day19, part2, match_distances)]
+pub fn part2(input: &[Scanner]) -> i32 {
+    let mut scanners = VecDeque::from(input.to_vec());
+    scanners.iter_mut().for_each(|s| s.update_distances());
+    let mut master = scanners.pop_front().unwrap();
+    let mut scanner_coords = vec![Point::default()];
+    while let Some(scanner) = scanners.pop_front() {
+        if let Some(oriented_scanner) = master.match_scanner_with_dists(&scanner) {
+            scanner_coords.push(oriented_scanner.coords);
+            master.merge_scanner(oriented_scanner);
+        } else {
+            scanners.push_back(scanner)
+        }
+    }
+
+    scanner_coords
         .iter()
         .combinations(2)
         .map(|c| (0..3).fold(0, |s, i| s + (c[0][i] - c[1][i]).abs()))
@@ -281,8 +405,8 @@ mod test_day19 {
         assert_eq!(part1(&input_parser(TESTCASE)), 79)
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     assert_eq!(part2(&input_parser(TESTCASE)), 3621)
-    // }
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&input_parser(TESTCASE)), 3621)
+    }
 }
