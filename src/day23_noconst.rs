@@ -30,58 +30,58 @@ const NUM_ROOMS: usize = 4;
 const HALLWAY: [usize; 7] = [0, 1, 3, 5, 7, 9, 10];
 const HALLWAY_LEN: usize = HALLWAY.len() + NUM_ROOMS;
 
-type Board<const N: usize> = [Node; N];
+type Board = Vec<Node>;
 type PossibleMoves = HashMap<(usize, usize), Vec<usize>>;
-type Rooms<const ROOM_SIZE: usize> = [[usize; ROOM_SIZE]; NUM_ROOMS];
+type Rooms = [Vec<usize>; NUM_ROOMS];
 
 #[derive(Clone)]
-pub struct State<const N: usize, const S: usize> {
-    board: Board<N>,
-    game: Rc<Game<N, S>>,
+pub struct State {
+    board: Board,
+    game: Rc<Game>,
 }
 
-impl<const N: usize, const S: usize> Hash for State<N, S> {
+impl Hash for State {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.board.hash(state);
     }
 }
 
-impl<const N: usize, const S: usize> PartialEq for State<N, S> {
+impl PartialEq for State {
     fn eq(&self, other: &Self) -> bool {
         self.board == other.board
     }
 }
 
-impl<const N: usize, const S: usize> Eq for State<N, S> {}
+impl Eq for State {}
 
-struct Game<const N: usize, const S: usize> {
+struct Game {
     moves: PossibleMoves,
-    rooms: Rooms<S>,
-    winning_pos: Board<N>,
+    rooms: Rooms,
+    winning_pos: Board,
 }
 
-impl<const N: usize, const S: usize> Game<N, S> {
-    fn new() -> Self {
-        let rooms = Self::rooms();
+impl Game {
+    fn new(room_size: usize) -> Self {
+        let rooms = Self::rooms(room_size);
         Self {
             moves: Self::possible_moves(&rooms),
             rooms,
-            winning_pos: Self::winning_position(),
+            winning_pos: Self::winning_position(room_size),
         }
     }
     // Generates the room indices
-    fn rooms() -> Rooms<S> {
-        let mut rooms = [[0; S]; NUM_ROOMS];
+    fn rooms(room_size: usize) -> Rooms {
+        let mut rooms = Rooms::default();
         for (room_idx, room) in rooms.iter_mut().enumerate() {
-            for (depth, r) in room.iter_mut().enumerate() {
-                *r = HALLWAY_LEN + room_idx + depth * NUM_ROOMS;
+            for depth in 0..room_size {
+                room.push(HALLWAY_LEN + room_idx + depth * NUM_ROOMS);
             }
         }
         rooms
     }
 
     // Generate possible moves
-    fn possible_moves(rooms: &Rooms<S>) -> PossibleMoves {
+    fn possible_moves(rooms: &Rooms) -> PossibleMoves {
         let mut moves = HashMap::new();
 
         // Hallway <=> Room
@@ -124,18 +124,20 @@ impl<const N: usize, const S: usize> Game<N, S> {
     }
 
     // Generate the winning possition
-    fn winning_position() -> Board<N> {
+    fn winning_position(room_size: usize) -> Board {
         let mut w = vec![Free; HALLWAY_LEN];
-        w.extend([A, B, C, D].repeat(S));
-        w.try_into().unwrap()
+        w.extend([A, B, C, D].repeat(room_size));
+        w
     }
 }
 
-impl<const N: usize, const S: usize> State<N, S> {
-    fn new(board: Board<N>) -> Self {
+impl State {
+    fn new(board: Board) -> Self {
+        let board_len = board.len();
+        let room_size = (board_len - HALLWAY_LEN) / NUM_ROOMS;
         Self {
             board,
-            game: Rc::new(Game::new()),
+            game: Rc::new(Game::new(room_size)),
         }
     }
 
@@ -193,7 +195,7 @@ impl<const N: usize, const S: usize> State<N, S> {
     }
 }
 
-impl<const N: usize, const S: usize> std::fmt::Debug for State<N, S> {
+impl std::fmt::Debug for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut nodes = self
             .board
@@ -222,7 +224,7 @@ impl<const N: usize, const S: usize> std::fmt::Debug for State<N, S> {
     }
 }
 
-fn parser<const N: usize, const S: usize>(input: &str) -> State<N, S> {
+fn parser(input: &str) -> State {
     let board = input
         .lines()
         .flat_map(|s| {
@@ -237,20 +239,12 @@ fn parser<const N: usize, const S: usize>(input: &str) -> State<N, S> {
                     _ => unreachable!(),
                 })
         })
-        .collect::<Vec<_>>()
-        .try_into()
-        .unwrap();
+        .collect::<Vec<_>>();
 
     State::new(board)
 }
 
-fn dfs<const N: usize, const S: usize>(
-    game: State<N, S>,
-    count_state: &mut usize,
-    cache: &mut HashMap<State<N, S>, Option<usize>>,
-) -> Option<usize> {
-    *count_state += 1;
-
+fn dfs(game: State, cache: &mut HashMap<State, Option<usize>>) -> Option<usize> {
     if let Some(cost) = cache.get(&game) {
         return *cost;
     }
@@ -271,7 +265,7 @@ fn dfs<const N: usize, const S: usize>(
                 let room = game.is_room_free(pod)?;
                 let path = game.get_path(pod, room)?;
                 let mut g = game.clone();
-                Some(g.move_pod(pod, path, room)? + dfs(g, count_state, cache)?)
+                Some(g.move_pod(pod, path, room)? + dfs(g, cache)?)
             }();
 
             // If possible to move to room - do it
@@ -285,7 +279,7 @@ fn dfs<const N: usize, const S: usize>(
                 .filter_map(|loc| {
                     let path = game.get_path(pod, loc)?;
                     let mut g = game.clone();
-                    Some(g.move_pod(pod, path, loc)? + dfs(g, count_state, cache)?)
+                    Some(g.move_pod(pod, path, loc)? + dfs(g, cache)?)
                 })
                 .min()
         })
@@ -295,34 +289,22 @@ fn dfs<const N: usize, const S: usize>(
     min_cost
 }
 
-#[aoc(day23, part1)]
+#[aoc(day23, part1, no_const)]
 pub fn part1(input: &str) -> Option<usize> {
-    const ROOM_SIZE: usize = 2;
-    const LEN: usize = HALLWAY.len() + NUM_ROOMS * (ROOM_SIZE + 1);
-    let state: State<LEN, ROOM_SIZE> = parser(input);
-
-    let mut count_state = 0;
-    let res = dfs(state, &mut count_state, &mut HashMap::new());
-    println!("State: {}", count_state);
-    res
+    let state: State = parser(input);
+    dfs(state, &mut HashMap::new())
 }
 
 const PART2: &str = "\
    #D#C#B#A#
    #D#B#A#C#";
 
-#[aoc(day23, part2)]
+#[aoc(day23, part2, no_const)]
 pub fn part2(input: &str) -> Option<usize> {
     let pos = input.find("\n ")?;
     let mut input = input.to_string();
     input.insert_str(pos + 1, PART2);
 
-    const ROOM_SIZE: usize = 4;
-    const LEN: usize = HALLWAY.len() + NUM_ROOMS * (ROOM_SIZE + 1);
-    let state: State<LEN, ROOM_SIZE> = parser(&input);
-
-    let mut count_state = 0;
-    let res = dfs(state, &mut count_state, &mut HashMap::new());
-    println!("State: {}", count_state);
-    res
+    let state: State = parser(&input);
+    dfs(state, &mut HashMap::new())
 }
