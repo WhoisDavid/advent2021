@@ -30,8 +30,8 @@ pub enum SubpacketsSize {
 
 #[derive(Debug)]
 pub struct Operator {
-    length_type_id: u16,
-    subpackets_size: SubpacketsSize,
+    _length_type_id: u16,
+    _subpackets_size: SubpacketsSize,
     subpackets: Vec<Packet>,
 }
 
@@ -81,8 +81,8 @@ fn parse_packet(input: &BitSlice<Msb0>) -> Packet {
             }
 
             let op = Operator {
-                length_type_id,
-                subpackets_size,
+                _length_type_id: length_type_id,
+                _subpackets_size: subpackets_size,
                 subpackets,
             };
 
@@ -99,8 +99,8 @@ fn parse_packet(input: &BitSlice<Msb0>) -> Packet {
             }
 
             let op = Operator {
-                length_type_id,
-                subpackets_size,
+                _length_type_id: length_type_id,
+                _subpackets_size: subpackets_size,
                 subpackets,
             };
 
