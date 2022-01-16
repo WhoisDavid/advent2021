@@ -4,6 +4,18 @@ Use `cargo-aoc` to run:
 ```
 cargo install cargo-aoc
 cargo aoc -d [day] -p [part]
+cargo aoc bench -d [day] - p [part]
+cargo run --release # to run all days
+```
+
+# Perf
+
+Sub-second for all 25 days together incl. variations :) 
+```bash
+❯ hyperfine "cargo run --release"
+Benchmark 1: cargo run --release
+  Time (mean ± σ):     897.5 ms ±  24.8 ms    [User: 895.9 ms, System: 47.0 ms]
+  Range (min … max):   875.2 ms … 963.0 ms    10 runs
 ```
 
 # Tricks

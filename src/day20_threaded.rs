@@ -267,7 +267,7 @@ pub fn part1((algo, image): &(Algorithm, Image)) -> usize {
     image.pixels.values().filter(|v| **v).count()
 }
 
-const PART2: usize = 500;
+const PART2: usize = 50;
 
 #[aoc(day20, part2, threads)]
 pub fn part2((algo, image): &(Algorithm, Image)) -> usize {
